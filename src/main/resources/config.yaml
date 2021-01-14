@@ -1,0 +1,37 @@
+entrypoints:
+  - barista.order.simpleOrder
+  - barista.order.simpleOrder
+  - barista.order.simpleOrder
+  - barista.order.simpleOrder
+  - barista.order.simpleOrder
+  - barista.order.latte
+applications:
+  barista:
+    services:
+      order:
+        operations:
+          - name: simpleOrder
+            calls:
+              - service: brew
+                name: dripCoffee
+              - service: bakery # bakery service is external
+                name: muffin
+                calls: [{ service: fulfillment }]
+            errorChance: 0 # simpleOrder never fails
+          - name: latte
+            calls:
+              - service: brew
+                name: espresso
+#          - ...
+      brew:
+        tags:
+           language: Go
+        baseLatency: 60000 # one minute, in milliseconds
+        operations:
+          - name: dripCoffee
+            calls:
+              - service: fulfillment # operation in fulfillment will be chosen randomly
+          - name: espresso
+            errorChance: 100 # the machine is broken
+      fulfillment:
+        operations: [{ name: deliver }, { name: pickup }]

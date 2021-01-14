@@ -8,8 +8,8 @@ import org.springframework.test.context.TestPropertySource;
 @SpringBootTest
 class TraceGeneratorApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+//	@Test
+//	void contextLoads() {
+//	}
 
 }
