@@ -1,5 +1,7 @@
 package com.sunnylabs.tracegenerator;
 
+import com.wavefront.sdk.common.Pair;
+
 import java.util.*;
 
 @lombok.Data
@@ -7,7 +9,7 @@ public class Service implements TraceGenerator {
     private String name;
     private String application;
     private List<Operation> operations;
-    private Map<String, String> tags;
+    private Map<String, String> tags = new HashMap<>();
     private int baseLatency = 0;
 
     @Override
@@ -21,6 +23,7 @@ public class Service implements TraceGenerator {
                 List<Span> spans = op.generateTrace(traceId);
                 spans.forEach(s -> {
                     s.duration += baseLatency;
+                    tags.forEach((k,v) -> s.tags.add(new Pair<>(k,v)));
                 });
                 return spans;
             }

@@ -179,6 +179,17 @@ public class ConfigurationTest {
         assertThat(subject.entrypoints().get(0).getName(), is("theOperation"));
     }
 
+    @Test
+    public void setsEntryPointsFromConfig() {
+        Configuration subject = generateConfiguration("entrypoints: [ app.svc.op1 ]\n" +
+                "applications:\n" +
+                "  app:\n" +
+                "    services: \n" +
+                "      svc: { operations: [{ name: op1 }, { name: op2 }] }\n");
+
+        assertThat(subject.entrypoints(), hasSize(1));
+    }
+
     private Configuration generateConfiguration(String config) {
         return new Configuration(new ByteArrayInputStream(config.getBytes()));
     }

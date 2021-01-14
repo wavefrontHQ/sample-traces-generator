@@ -2,10 +2,7 @@ package com.sunnylabs.tracegenerator;
 
 import com.wavefront.java_sdk.com.google.common.collect.ImmutableList;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @lombok.Data
 public class Operation implements TraceGenerator {
@@ -14,8 +11,7 @@ public class Operation implements TraceGenerator {
     private String application;
     private String source;
     private List<Operation> calls = new ArrayList<>();
-    private long startMillis;
-    private int durationMillis;
+    private Map<String, String> tags = new HashMap<>();
     private float errorChance;
 
     @SuppressWarnings("unused")
@@ -24,11 +20,6 @@ public class Operation implements TraceGenerator {
 
     public Operation(String name) {
         this.name = name;
-    }
-
-    public Operation(String name, String service) {
-        this.name = name;
-        this.service = service;
     }
 
     public void addCall(Operation op2) {
@@ -45,29 +36,36 @@ public class Operation implements TraceGenerator {
 
     @Override
     public List<Span> generateTrace(UUID traceId) {
-        return generateTrace(traceId, Optional.empty());
+        return generateTrace(traceId, Optional.empty(), 0, getRandomDuration(10000));
     }
 
-    public List<Span> generateTrace(UUID traceId, Optional<UUID> parentId) {
-        // TODO do we ever want to specify spanId?
-        startMillis = System.currentTimeMillis();
-        durationMillis = 22222;
-        source = "source";
+    private int getRandomDuration(int max) {
+        return new Random().nextInt(max/2) + max/2;
+    }
+
+    public List<Span> generateTrace(UUID traceId, Optional<UUID> parentId,
+                                    int offsetMillis, int durationMillis) {
+        source = "trace-generator";
 
         List<Span> trace = new ArrayList<>();
-        Span span = getSpan(traceId, parentId);
+        int duration = getRandomDuration(durationMillis);
+        int offset = getRandomDuration(durationMillis - duration) + offsetMillis;
+        Span span = getSpan(traceId, parentId, offset, duration);
         trace.add(span);
         if (calls != null) {
-            calls.forEach(c -> trace.addAll(c.generateTrace(traceId, Optional.ofNullable(span.spanId))));
+            calls.forEach(c -> trace.addAll(c.generateTrace(traceId,
+                    Optional.ofNullable(span.spanId), offset, duration)));
         }
         return trace;
     }
 
-    private Span getSpan(UUID traceId, Optional<UUID> parentId) {
+    private Span getSpan(UUID traceId, Optional<UUID> parentId, int offset, int durationMillis) {
+        long startMillis = System.currentTimeMillis() + offset;
         Span.Builder builder = new Span.Builder(name, startMillis, durationMillis, source);
         parentId.ifPresent(uuid -> builder.setParents(ImmutableList.of(uuid)));
         builder.errorChance(errorChance);
         builder.setIdentityTags(application, "cluster", service, "shard");
+        tags.forEach(builder::addTag);
         Span span = builder.build();
         span.traceId = traceId;
         return span;

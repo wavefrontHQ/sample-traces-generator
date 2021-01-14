@@ -49,8 +49,10 @@ public class ServiceTest {
 
     @Test
     public void crossServiceCalls() {
-        Operation op1 = new Operation("one", "testService");
-        Operation op2 = new Operation("two", "otherService");
+        Operation op1 = new Operation("one");
+        op1.setService("testService");
+        Operation op2 = new Operation("two");
+        op2.setService("otherService");
         op1.addCall(op2);
         Service subject = new Service.Builder().
                 name("testService").

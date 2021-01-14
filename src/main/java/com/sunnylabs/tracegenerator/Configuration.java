@@ -41,8 +41,8 @@ public class Configuration {
 
     private void fixOperationReferences(List<Operation> calls) {
         for (int i = 0; i < calls.size(); i++) {
-            Operation c = calls.get(i);
-            calls.set(i, existingOperation(c).orElse(c));
+            final int index = i;
+            existingOperation(calls.get(index)).ifPresent(e -> calls.set(index, e));
         }
     }
 
@@ -55,14 +55,15 @@ public class Configuration {
         if (svc == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(getOperationOrRandom(c, svc));
+        return Optional.of(getOperationOrRandom(c, svc));
     }
 
     private Operation getOperationOrRandom(Operation c, Service svc) {
         List<Operation> operations = svc.getOperations();
-        return operations.stream().
-                filter(o -> o.getName().equals(c.getName())).findFirst().
-                orElse(operations.get(new Random().nextInt(operations.size())));
+        Optional<Operation> first = operations.stream().
+                filter(o -> o.getName().equals(c.getName())).findFirst();
+        Operation random = operations.get(new Random().nextInt(operations.size()));
+        return first.orElse(random);
     }
 
     private void setServiceDefaults(Service svc, String serviceName, String defaultApplication) {
@@ -110,17 +111,23 @@ public class Configuration {
 
     @NonNull
     public List<Application> applications() {
+        if (raw.applications == null || raw.applications.isEmpty()) {
+            return Collections.emptyList();
+        }
         return new ArrayList<>(raw.applications.values());
     }
 
     public List<Operation> entrypoints() {
         List<Operation> entries = new ArrayList<>();
-        applications().forEach(a -> a.getServices().forEach((k, s) -> s.getOperations().forEach(o -> {
-            String slug = a.getName() + "." + s.getName() + "." + o.getName();
-            if (raw.entrypoints == null || raw.entrypoints.isEmpty() || raw.entrypoints.contains(slug)) {
-                entries.add(o);
-            }
-        })));
+        List<Application> applications = applications();
+        if (!applications.isEmpty()) {
+            applications.forEach(a -> a.getServices().forEach((k, s) -> s.getOperations().forEach(o -> {
+                String slug = a.getName() + "." + s.getName() + "." + o.getName();
+                if (raw.entrypoints == null || raw.entrypoints.isEmpty() || raw.entrypoints.contains(slug)) {
+                    entries.add(o);
+                }
+            })));
+        }
         return entries;
     }
 
@@ -130,7 +137,7 @@ public class Configuration {
 
     @Data
     public static class RawConfig {
-        public List<String> entrypoints;
-        private Map<String, Application> applications;
+        public List<String> entrypoints = new ArrayList<>();
+        private Map<String, Application> applications = new HashMap<>();
     }
 }

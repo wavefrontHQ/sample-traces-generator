@@ -1,9 +1,5 @@
 entrypoints:
   - barista.order.simpleOrder
-  - barista.order.simpleOrder
-  - barista.order.simpleOrder
-  - barista.order.simpleOrder
-  - barista.order.simpleOrder
   - barista.order.latte
 applications:
   barista:
@@ -14,9 +10,11 @@ applications:
             calls:
               - service: brew
                 name: dripCoffee
-              - service: bakery # bakery service is external
+              - service: bakery
                 name: muffin
-                calls: [{ service: fulfillment }]
+                tags:
+                  _outboundExternalService: Redis
+                calls: [{ application: barista, service: fulfillment, name: delivery }]
             errorChance: 0 # simpleOrder never fails
           - name: latte
             calls:
@@ -34,4 +32,4 @@ applications:
           - name: espresso
             errorChance: 100 # the machine is broken
       fulfillment:
-        operations: [{ name: deliver }, { name: pickup }]
+        operations: [{ name: delivery }, { name: pickup }]
