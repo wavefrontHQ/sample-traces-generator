@@ -1,6 +1,8 @@
 entrypoints:
   - barista.order.simpleOrder
   - barista.order.latte
+  - barista.order.americano
+  - barista.order.steamer
 applications:
   barista:
     services:
@@ -10,26 +12,52 @@ applications:
             calls:
               - service: brew
                 name: dripCoffee
-              - service: bakery
+              - application: bakery
+                service: order
                 name: muffin
-                tags:
-                  _outboundExternalService: Redis
-                calls: [{ application: barista, service: fulfillment, name: delivery }]
             errorChance: 0 # simpleOrder never fails
           - name: latte
             calls:
               - service: brew
                 name: espresso
-#          - ...
+              - service: brew
+                name: frothedMilk
+              - application: bakery
+                service: order
+                name: scone
+          - name: americano
+            calls:
+              - service: brew
+                name: espresso
+          - name: steamer
+            calls:
+              - service: brew
+                name: frothedMilk
       brew:
-        tags:
-           language: Go
         baseLatency: 60000 # one minute, in milliseconds
         operations:
           - name: dripCoffee
             calls:
-              - service: fulfillment # operation in fulfillment will be chosen randomly
+              - service: fulfillment
+                name: pickup
           - name: espresso
-            errorChance: 100 # the machine is broken
+            errorChance: 30
+            tags:
+              _outboundExternalService: AWSLambda
       fulfillment:
         operations: [{ name: delivery }, { name: pickup }]
+
+  bakery:
+    services:
+      order:
+        operations:
+          - name: muffin
+            calls: [ { application: barista, service: fulfillment, name: delivery } ]
+          - name: scone
+            calls:
+              - application: bakery
+                service: oven
+                name: warm
+                calls: [ { application: barista, service: fulfillment, name: delivery } ]
+        tags:
+          _outboundExternalService: Redis

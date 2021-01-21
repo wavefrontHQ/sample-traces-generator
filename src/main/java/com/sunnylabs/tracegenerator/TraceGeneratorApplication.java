@@ -1,7 +1,5 @@
 package com.sunnylabs.tracegenerator;
 
-import com.wavefront.java_sdk.com.google.common.collect.ImmutableMap;
-import com.wavefront.java_sdk.com.google.common.collect.ImmutableSet;
 import com.wavefront.sdk.proxy.WavefrontProxyClient;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -11,55 +9,56 @@ import org.springframework.context.annotation.Bean;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.List;
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 @SpringBootApplication
 public class TraceGeneratorApplication {
-	public Logger log = Logger.getLogger(TraceSender.class.toString());
+    public Logger log = Logger.getLogger(TraceSender.class.toString());
 
-	private WavefrontProxyClient client;
-	private TraceSender traceSender;
+    @SuppressWarnings("deprecation")
+    private WavefrontProxyClient client;
+    private TraceSender traceSender;
+    private Configuration config;
 
-	public static void main(String[] args) {
-		SpringApplication.run(TraceGeneratorApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(TraceGeneratorApplication.class, args);
+    }
 
-	@Bean
-	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
-		return args -> {
-			InputStream inputStream = this.getClass()
-					.getClassLoader()
-					.getResourceAsStream("config.yaml");
-			// ...
-			Configuration config = new Configuration(inputStream);
+    @Bean
+    public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
+        return args -> {
+            InputStream inputStream = this.getClass().getClassLoader()
+                    .getResourceAsStream("config.yaml");
+            config = new Configuration(inputStream);
 
+            // TODO extend WavefrontClient instead of using WavefrontProxyClient
+            client = new WavefrontProxyClient.Builder("localhost").
+                    metricsPort(2878).tracingPort(30001).build();
+            traceSender = new TraceSender(client);
 
-			// TODO extend WavefrontClient instead of using deprecated class
-			client = new WavefrontProxyClient.Builder("localhost").
-					metricsPort(2878).tracingPort(30001).build();
-			traceSender = new TraceSender(client);
+            Timer t = new Timer();
+            t.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    try {
+                        Operation op = randomEntrypoint();
+                        List<Span> trace = op.generateTrace(traceSender.traceId);
+                        log.info(String.format("Sending %d spans for %s.%s.%s", trace.size(),
+                                op.getApplication(), op.getService(),op.getName()));
+                        traceSender.send(trace);
+                    } catch (IOException ignored) {
+                    }
+                }
+            }, 0, Integer.parseInt(System.getProperty("generator.send_frequency_ms", "30000")));
+        };
+    }
 
-			for (int i = 0; i < 100; i++) {
-				sendTrace(config.entrypoints());
-				TimeUnit.SECONDS.sleep(1);
-			}
-
-		};
-	}
-
-	private void sendTrace(List<Operation> entrypoints) {
-		entrypoints.forEach((operation) -> {
-			List<Span> spans = operation.generateTrace(traceSender.traceId);
-			spans.forEach(traceSender::addSpan);
-			try {
-				traceSender.flush();
-			} catch (IOException ignored) {
-
-			}
-		});
-	}
-
-
+    private Operation randomEntrypoint() {
+        return config.entrypoints().get(new Random().nextInt(config.entrypoints().size()));
+    }
 }

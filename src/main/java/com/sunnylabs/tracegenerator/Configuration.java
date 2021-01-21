@@ -118,7 +118,7 @@ public class Configuration {
         apps.values().forEach(a -> {
             Collection<Service> services = a.getServices().values();
             List<Service> available = new ArrayList<>(services);
-            for (int i = 0; i < 3 && available.size() > 1; i++) {
+            while (available.size() > 1) {
                 Service s = getRandom(services);
                 Operation o = getRandom(s.getOperations());
 
@@ -129,8 +129,8 @@ public class Configuration {
             }
         });
 
-        // three cross app calls
-        for (int i = 0; i < 3; i++) {
+        // cross app calls
+        for (int i = 0; i < apps.size(); i++) {
             Operation random = getRandom(getRandom(getRandom(apps).getServices()).getOperations());
             Operation target = getRandom(getRandom(getRandom(apps).getServices()).getOperations());
             while (target.getApplication().equals(random.getApplication())) {

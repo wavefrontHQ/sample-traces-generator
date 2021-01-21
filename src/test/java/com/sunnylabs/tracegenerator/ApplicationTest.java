@@ -27,9 +27,7 @@ public class ApplicationTest {
 
     private Application getTestSubject(List<Service> serviceList) {
         Map<String, Service> services = new HashMap<>();
-        serviceList.forEach(s -> {
-            services.put(s.getName(), s);
-        });
+        serviceList.forEach(s -> services.put(s.getName(), s));
         Application subject = new Application();
         subject.setName("testApplication");
         subject.setServices(services);

@@ -4,8 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.constructor.ConstructorException;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -15,13 +13,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class ConfigurationTest {
     @Test
     public void emptyConfig() {
-        Configuration subject = new Configuration(new InputStream() {
-            @Override
-            public int read() throws IOException {
-                return 0;
-            }
-        });
-        // TODO defaults
+        Configuration subject = generateConfiguration("");
         assertThat(subject.applications(), hasSize(10));
     }
 
@@ -77,12 +69,10 @@ public class ConfigurationTest {
                 "        - { name: op2 }\n");
 
         Service svc = subject.applications().get(0).getService("testService");
-
         Operation op1 = svc.getOperations().get(0);
         Operation op2 = svc.getOperations().get(1);
         assertThat(op1.getName(), is("op1"));
         assertThat(op1.getCalls(), hasSize(1));
-
         assertThat(op1.getCalls(), contains(op2));
     }
 
@@ -108,7 +98,6 @@ public class ConfigurationTest {
         assertThat(op2.getName(), is("op2"));
         assertThat(op2.getService(), is("svc2"));
         assertThat(op2.getApplication(), is("app2"));
-
         assertThat(op1.getCalls(), contains(op2));
     }
 

@@ -1,6 +1,5 @@
 package com.sunnylabs.tracegenerator;
 
-import com.google.gson.GsonBuilder;
 import com.wavefront.sdk.entities.tracing.WavefrontTracingSpanSender;
 
 import java.io.IOException;
@@ -12,7 +11,6 @@ import java.util.logging.Logger;
 public class TraceSender {
   public WavefrontTracingSpanSender sender;
   public List<Span> spans = new ArrayList<>();
-  public Logger log = Logger.getLogger(TraceSender.class.toString());
   public UUID traceId = UUID.randomUUID();
 
   public TraceSender(WavefrontTracingSpanSender spanSender) {

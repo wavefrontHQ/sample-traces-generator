@@ -12,7 +12,7 @@ public class Operation implements TraceGenerator {
     private String source;
     private List<Operation> calls = new ArrayList<>();
     private Map<String, String> tags = new HashMap<>();
-    private float errorChance;
+    private float errorChance = Integer.parseInt(System.getProperty("generator.error_percentage", "5"));
 
     @SuppressWarnings("unused")
     public Operation() {
@@ -36,14 +36,14 @@ public class Operation implements TraceGenerator {
 
     @Override
     public List<Span> generateTrace(UUID traceId) {
-        return generateTrace(traceId, Optional.empty(), 0, getRandomDuration(10000));
+        return generateTrace(traceId, Optional.empty(), 0, getRandomDuration(1200));
     }
 
     private int getRandomDuration(int max) {
         if (max < 10) {
             return max;
         }
-        return new Random().nextInt(max/2) + max/2;
+        return new Random().nextInt(max / 2) + max / 2;
     }
 
     public List<Span> generateTrace(UUID traceId, Optional<UUID> parentId,
