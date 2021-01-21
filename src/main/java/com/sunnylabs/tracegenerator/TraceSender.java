@@ -25,10 +25,7 @@ public class TraceSender {
 
 
   public void flush() throws IOException {
-    log.info(String.format("Trace %s - %d spans", traceId, spans.size()));
     for (Span span : spans) {
-      log.info(String.format("Span %s - parent %s", span.operationName, span.parents));
-      log.info(new GsonBuilder().setPrettyPrinting().create().toJson(span));
       sender.sendSpan(span.operationName, span.startTime, span.duration, span.source, traceId,
               span.spanId, span.parents, span.followsFrom, span.tags, span.spanLogs);
     }

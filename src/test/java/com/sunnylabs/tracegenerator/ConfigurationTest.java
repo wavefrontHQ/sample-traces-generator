@@ -22,6 +22,7 @@ public class ConfigurationTest {
             }
         });
         // TODO defaults
+        assertThat(subject.applications(), hasSize(10));
     }
 
     @Test
@@ -189,6 +190,38 @@ public class ConfigurationTest {
 
         assertThat(subject.entrypoints(), hasSize(1));
     }
+
+    @Test
+    public void loopDetection() {
+        try {
+            generateConfiguration("applications: { app: { services: { svc: { " +
+                    "operations: [" +
+                    "{ name: op1, calls: [{ name: op2}]}," +
+                    "{ name: op2, calls: [{ name: op3}]}," +
+                    "{ name: op3, calls: [{ name: op1}]}" +
+                    "]}}}}");
+        } catch (IllegalArgumentException ignored) {
+            return;
+        }
+        fail();
+    }
+
+    @Test
+    public void ignoresApplicationNameOverride() {
+        Configuration subject = generateConfiguration("applications: { app: { name: different }}");
+        assertThat(subject.applications(), hasSize(1));
+        assertThat(subject.applications().get(0).getName(), is("app"));
+    }
+
+    @Test
+    public void ignoresServiceNameOverride() {
+        Configuration subject = generateConfiguration("applications: { app: { services: { svc: { " +
+                "name: different" +
+                "}}}}");
+        assertThat(subject.getApplication("app").getServices(), hasKey("svc"));
+        assertThat(subject.getApplication("app").getServices(), not(hasKey("different")));
+    }
+
 
     private Configuration generateConfiguration(String config) {
         return new Configuration(new ByteArrayInputStream(config.getBytes()));

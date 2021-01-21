@@ -40,9 +40,6 @@ public class Service implements TraceGenerator {
     }
 
     private String getRandomOperation() {
-        if (operations == null || operations.size() < 1) {
-            return "fake-operation";
-        }
         return operations.get(new Random().nextInt(operations.size())).getName();
     }
 

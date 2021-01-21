@@ -17,26 +17,163 @@ public class Configuration {
         Yaml yaml = new Yaml(new Constructor(RawConfig.class));
         raw = getRawConfig(stream, yaml);
         setDefaults();
+        checkCallGraph();
     }
 
-    private void setDefaults() {
-        if (raw.applications == null) {
-            return;
-        }
-        raw.applications.forEach((appName, app) -> {
-            app.setName(appName);
-            app.getServices().forEach((name, svc) -> setServiceDefaults(svc, name, appName));
-        });
-
-
+    private void checkCallGraph() {
         for (Application app : raw.applications.values()) {
+            if (app.getServices() == null || app.getServices().isEmpty()) {
+                continue;
+            }
+            for (Service svc : app.getServices().values()) {
+                List<Operation> ops = svc.getOperations();
+                if (ops == null || ops.isEmpty()) {
+                    continue;
+                }
+                for (Operation op : ops) {
+                    checkCalls(op, Collections.emptyList());
+                }
+            }
+        }
+    }
+
+    private void checkCalls(Operation operation, List<Operation> callGraph) {
+        List<Operation> graph = new ArrayList<>(callGraph);
+        graph.add(operation);
+        for (Operation o : operation.getCalls()) {
+            if (graph.contains(o)) {
+                throw new IllegalArgumentException(String.format("Operation %s.%s.%s has circular" +
+                                " reference to %s.%s.%s",
+                        operation.getApplication(), operation.getService(), operation.getName(),
+                        o.getApplication(), o.getService(), o.getName()));
+            }
+            checkCalls(o, graph);
+        }
+    }
+
+
+    private void setDefaults() {
+        if (raw.applications == null || raw.applications.isEmpty()) {
+            raw.applications = createRandomApps();
+        } else {
+            fixReferences(raw.applications);
+        }
+    }
+
+    private Map<String, Application> createRandomApps() {
+        Map<String, Application> apps = new HashMap<>();
+        Yaml yaml = new Yaml();
+        InputStream inputStream = this.getClass()
+                .getClassLoader()
+                .getResourceAsStream("wordlists.yaml");
+        Map<String, List<String>> words = yaml.load(inputStream);
+
+        List<String> appNames = words.get("applications");
+        for (int i = 0; i < 10; i++) {
+            int idx = new Random().nextInt(appNames.size());
+            String name = appNames.get(idx);
+            appNames.remove(idx);
+
+            List<String> serviceNames = new ArrayList<>(words.get("services"));
+            List<String> operationNames = new ArrayList<>(words.get("operations"));
+            Application a = createRandomApp(serviceNames, operationNames);
+            apps.put(name, a);
+        }
+
+        fixReferences(apps);
+        createRandomCalls(apps);
+        return apps;
+    }
+
+    private void fixReferences(Map<String, Application> apps) {
+        apps.forEach((appName, app) -> {
+            app.setName(appName);
+            if (app.getServices() == null) {
+                return;
+            }
+            app.getServices().forEach((name, svc) -> setServiceDefaults(svc, name, appName));
+
             for (Service svc : app.getServices().values()) {
                 List<Operation> ops = svc.getOperations();
                 if (ops != null && !ops.isEmpty()) {
                     ops.stream().map(Operation::getCalls).forEach(this::fixOperationReferences);
                 }
             }
+        });
+    }
+
+    private void createRandomCalls(Map<String, Application> apps) {
+        // internal calls per service
+        apps.values().forEach(a -> a.getServices().values().forEach(s -> {
+            List<Operation> ops = s.getOperations();
+            List<Operation> available = new ArrayList<>(ops);
+            for (int i = 0; i < 3 && available.size() > 1; i++) {
+                Operation o = getRandom(ops);
+                available.remove(o);
+                o.addCall(getRandom(available));
+            }
+        }));
+
+        // cross service calls per app
+        apps.values().forEach(a -> {
+            Collection<Service> services = a.getServices().values();
+            List<Service> available = new ArrayList<>(services);
+            for (int i = 0; i < 3 && available.size() > 1; i++) {
+                Service s = getRandom(services);
+                Operation o = getRandom(s.getOperations());
+
+                available.remove(s);
+                Operation op2 = getRandom(getRandom(available).getOperations());
+
+                o.addCall(op2);
+            }
+        });
+
+        // three cross app calls
+        for (int i = 0; i < 3; i++) {
+            Operation random = getRandom(getRandom(getRandom(apps).getServices()).getOperations());
+            Operation target = getRandom(getRandom(getRandom(apps).getServices()).getOperations());
+            while (target.getApplication().equals(random.getApplication())) {
+                target = getRandom(getRandom(getRandom(apps).getServices()).getOperations());
+            }
+            random.addCall(target);
         }
+    }
+
+    private <T> T getRandom(Map<?, T> from) {
+        return new ArrayList<>(from.values()).get(new Random().nextInt(from.size()));
+    }
+
+    private <T> T getRandom(Collection<T> from) {
+        return new ArrayList<>(from).get(new Random().nextInt(from.size()));
+    }
+
+
+    private Application createRandomApp(List<String> serviceNames, List<String> operationNames) {
+        Application a = new Application();
+        Map<String, Service> services = new HashMap<>();
+        for (int i = 0; i < 10; i++) {
+            int idx = new Random().nextInt(serviceNames.size());
+            String name = serviceNames.get(idx);
+            serviceNames.remove(idx);
+            Service service = createRandomService(new ArrayList<>(operationNames));
+            services.put(name, service);
+        }
+        a.setServices(services);
+        return a;
+    }
+
+    private Service createRandomService(List<String> operationNames) {
+        Service s = new Service();
+        List<Operation> operations = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            int idx = new Random().nextInt(operationNames.size());
+            String name = operationNames.get(idx);
+            operationNames.remove(idx);
+            operations.add(new Operation(name));
+        }
+        s.setOperations(operations);
+        return s;
     }
 
     private void fixOperationReferences(List<Operation> calls) {
@@ -67,13 +204,7 @@ public class Configuration {
     }
 
     private void setServiceDefaults(Service svc, String serviceName, String defaultApplication) {
-        if (Strings.isNullOrEmpty(svc.getName())) {
-            svc.setName(serviceName);
-        }
-        // TODO
-//        if (!svc.getName().equals(serviceName)) {
-//            throw new IllegalArgumentException("Service name overridden in config");
-//        }
+        svc.setName(serviceName);
         if (Strings.isNullOrEmpty(svc.getApplication())) {
             svc.setApplication(defaultApplication);
         }
@@ -106,7 +237,12 @@ public class Configuration {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return yaml.load(stream);
+        RawConfig rawConfig = yaml.load(stream);
+        if (rawConfig == null) {
+            return new RawConfig();
+        }
+        return rawConfig;
+
     }
 
     @NonNull

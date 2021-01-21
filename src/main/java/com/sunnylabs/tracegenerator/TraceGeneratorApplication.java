@@ -1,5 +1,7 @@
 package com.sunnylabs.tracegenerator;
 
+import com.wavefront.java_sdk.com.google.common.collect.ImmutableMap;
+import com.wavefront.java_sdk.com.google.common.collect.ImmutableSet;
 import com.wavefront.sdk.proxy.WavefrontProxyClient;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;

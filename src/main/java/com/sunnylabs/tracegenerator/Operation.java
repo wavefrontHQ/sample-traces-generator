@@ -40,6 +40,9 @@ public class Operation implements TraceGenerator {
     }
 
     private int getRandomDuration(int max) {
+        if (max < 10) {
+            return max;
+        }
         return new Random().nextInt(max/2) + max/2;
     }
 
