@@ -34,7 +34,6 @@ applications:
               - service: brew
                 name: frothedMilk
       brew:
-        baseLatency: 60000 # one minute, in milliseconds
         operations:
           - name: dripCoffee
             calls:
