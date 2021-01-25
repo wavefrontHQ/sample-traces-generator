@@ -37,8 +37,11 @@ public class TraceGeneratorApplication {
             config = new Configuration(inputStream);
 
             // TODO extend WavefrontClient instead of using WavefrontProxyClient
+            // TODO get ports and hostnames from app properties
             client = new WavefrontProxyClient.Builder("localhost").
-                    metricsPort(2878).tracingPort(30001).build();
+                    distributionPort(2878).
+                    metricsPort(2878).
+                    tracingPort(30001).build();
             traceSender = new TraceSender(client);
 
             Timer t = new Timer();
