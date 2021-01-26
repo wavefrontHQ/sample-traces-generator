@@ -12,6 +12,8 @@ import java.util.*;
 
 public class Configuration {
     private final RawConfig raw;
+    private int servicesPerApp = 50;
+    private int internalCallsPerApp = 3;
 
     public Configuration(InputStream stream) {
         Yaml yaml = new Yaml(new Constructor(RawConfig.class));
@@ -107,7 +109,7 @@ public class Configuration {
         apps.values().forEach(a -> a.getServices().values().forEach(s -> {
             List<Operation> ops = s.getOperations();
             List<Operation> available = new ArrayList<>(ops);
-            for (int i = 0; i < 3 && available.size() > 1; i++) {
+            for (int i = 0; i < internalCallsPerApp && available.size() > 1; i++) {
                 Operation o = getRandom(ops);
                 available.remove(o);
                 o.addCall(getRandom(available));
@@ -152,7 +154,8 @@ public class Configuration {
     private Application createRandomApp(List<String> serviceNames, List<String> operationNames) {
         Application a = new Application();
         Map<String, Service> services = new HashMap<>();
-        for (int i = 0; i < 10; i++) {
+        int desiredServices = Math.min(servicesPerApp, serviceNames.size());
+        for (int i = 0; i < desiredServices; i++) {
             int idx = new Random().nextInt(serviceNames.size());
             String name = serviceNames.get(idx);
             serviceNames.remove(idx);
