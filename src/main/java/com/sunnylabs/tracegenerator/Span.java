@@ -37,18 +37,18 @@ public class Span {
     public static class Builder {
         public UUID traceId;
         public UUID spanId;
-        private String operationName;
         public long startMillis;
         public long durationMillis;
+        List<UUID> parents;
+        List<UUID> followsFrom;
+        List<Pair<String, String>> tags = new ArrayList<>();
+        List<SpanLog> spanLogs = new ArrayList<>();
+        private String operationName;
         private String source;
         private String application;
         private String cluster;
         private String service;
         private String shard;
-        List<UUID> parents;
-        List<UUID> followsFrom;
-        List<Pair<String, String>> tags = new ArrayList<>();
-        List<SpanLog> spanLogs = new ArrayList<>();
         private double errorChance;
 
         public Builder() {

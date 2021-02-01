@@ -12,8 +12,8 @@ import java.util.*;
 
 public class Configuration {
     private final RawConfig raw;
-    private int servicesPerApp = 50;
-    private int internalCallsPerApp = 3;
+    private final int servicesPerApp = 50;
+    private final int internalCallsPerApp = 3;
 
     public Configuration(InputStream stream) {
         Yaml yaml = new Yaml(new Constructor(RawConfig.class));

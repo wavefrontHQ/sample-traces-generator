@@ -44,7 +44,7 @@ applications:
             tags:
               _outboundExternalService: AWSLambda
       fulfillment:
-        operations: [{ name: delivery }, { name: pickup }]
+        operations: [ { name: delivery }, { name: pickup } ]
 
   bakery:
     services:

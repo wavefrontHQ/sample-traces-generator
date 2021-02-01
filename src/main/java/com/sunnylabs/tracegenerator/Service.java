@@ -23,7 +23,7 @@ public class Service implements TraceGenerator {
                 List<Span> spans = op.generateTrace(traceId);
                 spans.forEach(s -> {
                     s.duration += baseLatency;
-                    tags.forEach((k,v) -> s.tags.add(new Pair<>(k,v)));
+                    tags.forEach((k, v) -> s.tags.add(new Pair<>(k, v)));
                 });
                 return spans;
             }

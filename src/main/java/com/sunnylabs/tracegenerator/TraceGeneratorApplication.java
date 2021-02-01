@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 @SpringBootApplication
@@ -52,7 +51,7 @@ public class TraceGeneratorApplication {
                         Operation op = randomEntrypoint();
                         List<Span> trace = op.generateTrace(traceSender.traceId);
                         log.info(String.format("Sending %d spans for %s.%s.%s", trace.size(),
-                                op.getApplication(), op.getService(),op.getName()));
+                                op.getApplication(), op.getService(), op.getName()));
                         traceSender.send(trace);
                     } catch (IOException ignored) {
                     }

@@ -6,39 +6,38 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.logging.Logger;
 
 public class TraceSender {
-  public WavefrontTracingSpanSender sender;
-  public List<Span> spans = new ArrayList<>();
-  public UUID traceId = UUID.randomUUID();
+    public WavefrontTracingSpanSender sender;
+    public List<Span> spans = new ArrayList<>();
+    public UUID traceId = UUID.randomUUID();
 
-  public TraceSender(WavefrontTracingSpanSender spanSender) {
-    sender = spanSender;
-  }
-
-  public void addSpan(Span span) {
-    spans.add(span);
-  }
-
-
-  public void flush() throws IOException {
-    for (Span span : spans) {
-      sender.sendSpan(span.operationName, span.startTime, span.duration, span.source, traceId,
-              span.spanId, span.parents, span.followsFrom, span.tags, span.spanLogs);
+    public TraceSender(WavefrontTracingSpanSender spanSender) {
+        sender = spanSender;
     }
 
-    spans.clear();
-    traceId = UUID.randomUUID();
-  }
+    public void addSpan(Span span) {
+        spans.add(span);
+    }
 
-  public void send(List<Span> spans) throws IOException {
-    spans.forEach(this::addSpan);
-    flush();
-  }
 
-  public void send(TraceGenerator tracer) throws IOException {
-    tracer.generateTrace(traceId).forEach(this::addSpan);
-    flush();
-  }
+    public void flush() throws IOException {
+        for (Span span : spans) {
+            sender.sendSpan(span.operationName, span.startTime, span.duration, span.source, traceId,
+                    span.spanId, span.parents, span.followsFrom, span.tags, span.spanLogs);
+        }
+
+        spans.clear();
+        traceId = UUID.randomUUID();
+    }
+
+    public void send(List<Span> spans) throws IOException {
+        spans.forEach(this::addSpan);
+        flush();
+    }
+
+    public void send(TraceGenerator tracer) throws IOException {
+        tracer.generateTrace(traceId).forEach(this::addSpan);
+        flush();
+    }
 }
