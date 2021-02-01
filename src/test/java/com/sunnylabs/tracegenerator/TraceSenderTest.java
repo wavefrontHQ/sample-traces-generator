@@ -153,9 +153,8 @@ public class TraceSenderTest {
         Span actual = mockSender.spans.get(0);
         assertEquals(1, getTagCount("error", actual.tags));
         assertEquals("true", getTagValue("error", actual.tags));
-        // TODO not sending span logs for the time being
-        // https://vmware.slack.com/archives/C0DEYJDFZ/p1607559032116900?thread_ts=1607556470.112800&cid=C0DEYJDFZ
-//    assertThat(actual.spanLogs, hasSize(greaterThan(0)));
+        // Uncomment the following line to validate sending of span logs (see {Span.addError})
+        // assertThat(actual.spanLogs, hasSize(greaterThan(0)));
     }
 
     @Test

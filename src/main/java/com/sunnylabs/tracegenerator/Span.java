@@ -130,9 +130,8 @@ public class Span {
 
         private void addError() {
             addTag("error", "true");
-            // TODO not sending span logs for the time being
-            // https://vmware.slack.com/archives/C0DEYJDFZ/p1607559032116900?thread_ts=1607556470.112800&cid=C0DEYJDFZ
-//        spanLogs.add(new SpanLog(1000, ImmutableMap.of("errorChance", String.valueOf(errorChance))));
+            // Uncomment the following line to enable sending of span logs
+            // spanLogs.add(new SpanLog(1000, ImmutableMap.of("errorChance", String.valueOf(errorChance))));
         }
 
         private boolean hasTag(String tagName, List<Pair<String, String>> tags) {
