@@ -19,7 +19,9 @@ import java.util.Random;
 
 public class Configuration {
     private final RawConfig raw;
+    private final int desiredRandomApps = 10;
     private final int servicesPerApp = 50;
+    private final int operationsPerService = 10;
     private final int internalCallsPerApp = 3;
 
     public Configuration(InputStream stream) {
@@ -78,7 +80,7 @@ public class Configuration {
         Map<String, List<String>> words = yaml.load(inputStream);
 
         List<String> appNames = words.get("applications");
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < desiredRandomApps && appNames.size() > 0; i++) {
             int idx = new Random().nextInt(appNames.size());
             String name = appNames.get(idx);
             appNames.remove(idx);
@@ -176,7 +178,7 @@ public class Configuration {
         List<String> names = new ArrayList<>(operationNames);
         Service s = new Service();
         Map<String, Operation> operations = new HashMap<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < operationsPerService && names.size() > 0; i++) {
             int idx = new Random().nextInt(names.size());
             String name = names.get(idx);
             names.remove(idx);
