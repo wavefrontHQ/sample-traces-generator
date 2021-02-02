@@ -22,12 +22,13 @@ public class TraceSender {
 
 
     public void flush() throws IOException {
-        for (Span span : spans) {
+        List<Span> iterable = new ArrayList<>(spans);
+        for (Span span : iterable) {
             sender.sendSpan(span.operationName, span.startTime, span.duration, span.source, traceId,
                     span.spanId, span.parents, span.followsFrom, span.tags, span.spanLogs);
+            spans.remove(span);
         }
 
-        spans.clear();
         traceId = UUID.randomUUID();
     }
 

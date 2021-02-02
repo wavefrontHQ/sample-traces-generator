@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static java.util.Collections.emptyMap;
+import static org.assertj.core.api.Assertions.fail;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
@@ -167,9 +168,33 @@ public class TraceSenderTest {
         subject.flush();
         assertThat(mockSender.spans, hasSize(1));
 
-        mockSender.clear();
+        mockSender.reset();
         subject.flush();
         assertThat(mockSender.spans, hasSize(0));
+    }
+
+    @Test
+    public void retainsSpansThatCouldNotBeSent() throws IOException {
+        subject.addSpan(new Span.Builder().build());
+        mockSender.throwOnSend = true;
+        try {
+            subject.flush();
+        } catch (IOException e) {
+            assertThat(mockSender.spans, hasSize(0));
+
+            mockSender.reset();
+            subject.flush();
+            assertThat(mockSender.spans, hasSize(1));
+            return;
+        }
+        fail("initial flush did not throw");
+    }
+
+    @Test
+    public void resetsTraceIdAfterSending() throws IOException {
+        UUID initialTraceId = subject.traceId;
+        subject.flush();
+        assertThat(subject.traceId, is(not(initialTraceId)));
     }
 
     private String getTagValue(String key, List<Pair<String, String>> tags) {
