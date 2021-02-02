@@ -1,6 +1,7 @@
 package com.sunnylabs.tracegenerator;
 
 import com.wavefront.java_sdk.com.google.common.collect.ImmutableList;
+import com.wavefront.java_sdk.com.google.common.collect.ImmutableMap;
 import com.wavefront.sdk.common.Pair;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +20,7 @@ public class ApplicationTest {
     public void singleService() {
         Service svc = new Service.Builder().
                 name("one").
-                operations(ImmutableList.of(new Operation("1"))).build();
+                operations(ImmutableMap.of("1", new Operation("1"))).build();
         Application subject = getTestSubject(Collections.singletonList(svc));
 
         UUID traceId = UUID.randomUUID();
@@ -43,13 +44,13 @@ public class ApplicationTest {
     public void linearCallGraph() {
         Operation op1 = new Operation("1");
         Service svc1 = new Service.Builder().name("one").
-                operations(ImmutableList.of(op1)).build();
+                operations(ImmutableMap.of("1", op1)).build();
         Operation op2 = new Operation("2");
         Service svc2 = new Service.Builder().name("two").
-                operations(ImmutableList.of(op2)).build();
+                operations(ImmutableMap.of("2", op2)).build();
         Operation op3 = new Operation("3");
         Service svc3 = new Service.Builder().name("three").
-                operations(ImmutableList.of(op3)).build();
+                operations(ImmutableMap.of("3", op3)).build();
 
         op1.addCall(op2);
         op2.addCall(op3);
@@ -61,10 +62,6 @@ public class ApplicationTest {
         assertThat(serviceName(result.get(0).tags), is("one"));
         assertThat(serviceName(result.get(1).tags), is("two"));
         assertThat(serviceName(result.get(2).tags), is("three"));
-    }
-
-    private String applicationName(List<Pair<String, String>> tags) {
-        return getTagValue(tags, "application");
     }
 
     private String serviceName(List<Pair<String, String>> tags) {

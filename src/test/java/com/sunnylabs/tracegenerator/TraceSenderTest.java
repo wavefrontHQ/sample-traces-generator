@@ -62,7 +62,7 @@ public class TraceSenderTest {
         Service svc = new Service();
         svc.setName("testService");
         Operation op1 = new Operation("one");
-        svc.setOperations(Collections.singletonList(op1));
+        svc.setOperations(Collections.singletonMap(op1.getName(), op1));
         app.setServices(Collections.singletonMap(svc.getName(), svc));
 
         subject.send(app);
@@ -76,7 +76,7 @@ public class TraceSenderTest {
         Service svc = new Service();
         svc.setName("testService");
         Operation op1 = new Operation("one");
-        svc.setOperations(Collections.singletonList(op1));
+        svc.setOperations(Collections.singletonMap(op1.getName(), op1));
 
         subject.send(svc);
         assertThat(mockSender.spans, is(not(empty())));

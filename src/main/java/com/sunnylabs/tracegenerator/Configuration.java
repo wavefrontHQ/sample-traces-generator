@@ -35,11 +35,11 @@ public class Configuration {
                 continue;
             }
             for (Service svc : app.getServices().values()) {
-                List<Operation> ops = svc.getOperations();
+                Map<String, Operation> ops = svc.getOperations();
                 if (ops == null || ops.isEmpty()) {
                     continue;
                 }
-                for (Operation op : ops) {
+                for (Operation op : ops.values()) {
                     checkCalls(op, Collections.emptyList());
                 }
             }
@@ -103,9 +103,9 @@ public class Configuration {
             app.getServices().forEach((name, svc) -> setServiceDefaults(svc, name, appName));
 
             for (Service svc : app.getServices().values()) {
-                List<Operation> ops = svc.getOperations();
+                Map<String, Operation> ops = svc.getOperations();
                 if (ops != null && !ops.isEmpty()) {
-                    ops.stream().map(Operation::getCalls).forEach(this::fixOperationReferences);
+                    ops.values().stream().map(Operation::getCalls).forEach(this::fixOperationReferences);
                 }
             }
         });
@@ -114,8 +114,8 @@ public class Configuration {
     private void createRandomCalls(Map<String, Application> apps) {
         // internal calls per service
         apps.values().forEach(a -> a.getServices().values().forEach(s -> {
-            List<Operation> ops = s.getOperations();
-            List<Operation> available = new ArrayList<>(ops);
+            Map<String, Operation> ops = s.getOperations();
+            List<Operation> available = new ArrayList<>(ops.values());
             for (int i = 0; i < internalCallsPerApp && available.size() > 1; i++) {
                 Operation o = getRandom(ops);
                 available.remove(o);
@@ -175,12 +175,12 @@ public class Configuration {
 
     private Service createRandomService(List<String> operationNames) {
         Service s = new Service();
-        List<Operation> operations = new ArrayList<>();
+        Map<String, Operation> operations = new HashMap<>();
         for (int i = 0; i < 10; i++) {
             int idx = new Random().nextInt(operationNames.size());
             String name = operationNames.get(idx);
             operationNames.remove(idx);
-            operations.add(new Operation(name));
+            operations.put(name, new Operation(name));
         }
         s.setOperations(operations);
         return s;
@@ -206,11 +206,9 @@ public class Configuration {
     }
 
     private Operation getOperationOrRandom(Operation c, Service svc) {
-        List<Operation> operations = svc.getOperations();
-        Optional<Operation> first = operations.stream().
-                filter(o -> o.getName().equals(c.getName())).findFirst();
+        List<Operation> operations = new ArrayList<>(svc.getOperations().values());
         Operation random = operations.get(new Random().nextInt(operations.size()));
-        return first.orElse(random);
+        return svc.getOperations().getOrDefault(c.getName(), random);
     }
 
     private void setServiceDefaults(Service svc, String serviceName, String defaultApplication) {
@@ -219,18 +217,22 @@ public class Configuration {
             svc.setApplication(defaultApplication);
         }
         if (svc.getOperations() != null) {
-            for (Operation op : svc.getOperations()) {
-                setOperationDefaults(op, svc.getApplication(), svc.getName());
+            svc.getOperations().forEach((name, op) -> {
+                setOperationDefaults(op, name, svc.getApplication(), svc.getName());
                 for (Operation o : op.getCalls()) {
-                    setOperationDefaults(o, svc.getApplication(), svc.getName());
+                    setOperationDefaults(o, o.getName(), svc.getApplication(), svc.getName());
 
                 }
-            }
+            });
         }
 
     }
 
-    private void setOperationDefaults(Operation op, String defaultApplication, String defaultService) {
+    private void setOperationDefaults(Operation op,
+                                      String operationName,
+                                      String defaultApplication,
+                                      String defaultService) {
+        op.setName(operationName);
         if (Strings.isNullOrEmpty(op.getApplication())) {
             op.setApplication(defaultApplication);
         }
@@ -267,7 +269,7 @@ public class Configuration {
         List<Operation> entries = new ArrayList<>();
         List<Application> applications = applications();
         if (!applications.isEmpty()) {
-            applications.forEach(a -> a.getServices().forEach((k, s) -> s.getOperations().forEach(o -> {
+            applications.forEach(a -> a.getServices().forEach((svcName, s) -> s.getOperations().forEach((opName, o) -> {
                 String slug = a.getName() + "." + s.getName() + "." + o.getName();
                 if (raw.entrypoints == null || raw.entrypoints.isEmpty() || raw.entrypoints.contains(slug)) {
                     entries.add(o);

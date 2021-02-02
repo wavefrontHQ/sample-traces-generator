@@ -1,6 +1,6 @@
 package com.sunnylabs.tracegenerator;
 
-import com.wavefront.java_sdk.com.google.common.collect.ImmutableList;
+import com.wavefront.java_sdk.com.google.common.collect.ImmutableMap;
 import com.wavefront.sdk.common.Pair;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +17,7 @@ public class ServiceTest {
         Operation op1 = new Operation("one");
         Service subject = new Service.Builder().
                 name("testService").
-                operations(ImmutableList.of(op1)).
+                operations(ImmutableMap.of(op1.getName(), op1)).
                 build();
 
         UUID traceId = UUID.randomUUID();
@@ -36,7 +36,10 @@ public class ServiceTest {
         op2.addCall(op3);
         Service subject = new Service.Builder().
                 name("testService").
-                operations(ImmutableList.of(op1, op2, op3)).
+                operations(ImmutableMap.of(
+                        op1.getName(), op1,
+                        op2.getName(), op2,
+                        op3.getName(), op3)).
                 build();
 
         List<Span> result = subject.generateTrace(UUID.randomUUID(), "one");
@@ -56,7 +59,7 @@ public class ServiceTest {
         op1.addCall(op2);
         Service subject = new Service.Builder().
                 name("testService").
-                operations(ImmutableList.of(op1)).
+                operations(ImmutableMap.of(op1.getName(), op1)).
                 build();
 
         List<Span> result = subject.generateTrace(UUID.randomUUID(), "one");

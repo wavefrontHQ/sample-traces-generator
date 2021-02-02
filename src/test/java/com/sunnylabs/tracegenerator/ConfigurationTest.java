@@ -50,14 +50,14 @@ public class ConfigurationTest {
                 "    services: \n" +
                 "      testService:\n" +
                 "        operations:\n" +
-                "        - name: theOperation\n");
+                "          theOperation: {}\n");
 
         assertThat(subject.applications(), hasSize(1));
         Application app = subject.applications().get(0);
         assertThat(app.getServices(), aMapWithSize(1));
         Service svc = app.getService("testService");
-        assertThat(svc.getOperations(), hasSize(1));
-        Operation op = svc.getOperations().get(0);
+        assertThat(svc.getOperations(), aMapWithSize(1));
+        Operation op = svc.getOperation("theOperation");
         assertThat(op.getApplication(), is("testApp"));
         assertThat(op.getService(), is("testService"));
         assertThat(op.getName(), is("theOperation"));
@@ -70,13 +70,12 @@ public class ConfigurationTest {
                 "    services:\n" +
                 "      testService:\n" +
                 "        operations:\n" +
-                "        - { name: op1, calls: [{ name: op2 }] }\n" +
-                "        - { name: op2 }\n");
+                "          op1: { calls: [{ name: op2 }] }\n" +
+                "          op2: { }\n");
 
         Service svc = subject.applications().get(0).getService("testService");
-        Operation op1 = svc.getOperations().get(0);
-        Operation op2 = svc.getOperations().get(1);
-        assertThat(op1.getName(), is("op1"));
+        Operation op1 = svc.getOperation("op1");
+        Operation op2 = svc.getOperation("op2");
         assertThat(op1.getCalls(), hasSize(1));
         assertThat(op1.getCalls(), contains(op2));
     }
@@ -88,18 +87,20 @@ public class ConfigurationTest {
                 "    services:\n" +
                 "      svc1:\n" +
                 "        operations:\n" +
-                "        - name: op1\n" +
-                "          calls:\n" +
-                "          - { application: app2, service: svc2, name: op2 }\n" +
+                "          op1:\n" +
+                "            calls:\n" +
+                "            - { application: app2, service: svc2, name: op2 }\n" +
                 "  app2:\n" +
                 "    services:\n" +
-                "      svc2: { operations: [{ name: op2, errorChance: 100 }] }\n");
+                "      svc2: { operations: { op2: { errorChance: 100 } } }\n");
 
-        Operation op1 = subject.getApplication("app1").getService("svc1").getOperations().get(0);
+        Operation op1 = subject.getApplication("app1").getService("svc1").getOperation(
+                "op1");
         assertThat(op1.getName(), is("op1"));
         assertThat(op1.getService(), is("svc1"));
         assertThat(op1.getApplication(), is("app1"));
-        Operation op2 = subject.getApplication("app2").getService("svc2").getOperations().get(0);
+        Operation op2 = subject.getApplication("app2").getService("svc2").getOperation(
+                "op2");
         assertThat(op2.getName(), is("op2"));
         assertThat(op2.getService(), is("svc2"));
         assertThat(op2.getApplication(), is("app2"));
@@ -112,8 +113,9 @@ public class ConfigurationTest {
                 "  testApp:\n" +
                 "    services:\n" +
                 "      testService:\n" +
-                "        operations: [{ name: theOperation, errorChance: 97 }]");
-        Operation op1 = valid.applications().get(0).getService("testService").getOperations().get(0);
+                "        operations: { theOperation: { errorChance: 97 } }");
+        Operation op1 = valid.applications().get(0).getService("testService").getOperation(
+                "theOperation");
         assertThat(op1.getErrorChance(), is(97F));
     }
 
@@ -125,8 +127,8 @@ public class ConfigurationTest {
                     "  services: \n" +
                     "  - name: testService\n" +
                     "    operations:\n" +
-                    "    - name: theOperation\n" +
-                    "      errorChance: -97\n");
+                    "      theOperation:\n" +
+                    "        errorChance: -97\n");
         } catch (ConstructorException ignored) {
             return;
         }
@@ -141,8 +143,8 @@ public class ConfigurationTest {
                     "  services: \n" +
                     "  - name: testService\n" +
                     "    operations:\n" +
-                    "    - name: theOperation\n" +
-                    "      errorChance: 197\n");
+                    "      theOperation:\n" +
+                    "        errorChance: 197\n");
         } catch (ConstructorException ignored) {
             return;
         }
@@ -168,7 +170,7 @@ public class ConfigurationTest {
         Configuration subject = generateConfiguration("applications:\n" +
                 "  testApp:\n" +
                 "    services: \n" +
-                "      testService: { operations: [{ name: theOperation }] }\n");
+                "      testService: { operations: { theOperation: {} } }\n");
 
         assertThat(subject.entrypoints(), hasSize(1));
         assertThat(subject.entrypoints().get(0).getName(), is("theOperation"));
@@ -180,7 +182,7 @@ public class ConfigurationTest {
                 "applications:\n" +
                 "  app:\n" +
                 "    services: \n" +
-                "      svc: { operations: [{ name: op1 }, { name: op2 }] }\n");
+                "      svc: { operations: { op1: {}, op2: {} } }\n");
 
         assertThat(subject.entrypoints(), hasSize(1));
     }
@@ -189,11 +191,11 @@ public class ConfigurationTest {
     public void loopDetection() {
         try {
             generateConfiguration("applications: { app: { services: { svc: { " +
-                    "operations: [" +
-                    "{ name: op1, calls: [{ name: op2}]}," +
-                    "{ name: op2, calls: [{ name: op3}]}," +
-                    "{ name: op3, calls: [{ name: op1}]}" +
-                    "]}}}}");
+                    "operations: {" +
+                    "  op1: { calls: [{ name: op2 }] }," +
+                    "  op2: { calls: [{ name: op3 }] }," +
+                    "  op3: { calls: [{ name: op4 }] }" +
+                    "} }}}}");
         } catch (IllegalArgumentException ignored) {
             return;
         }
