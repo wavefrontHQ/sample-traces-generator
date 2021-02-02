@@ -2,7 +2,13 @@ package com.sunnylabs.tracegenerator;
 
 import com.wavefront.java_sdk.com.google.common.collect.ImmutableList;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.UUID;
 
 @lombok.Data
 public class Operation implements TraceGenerator {

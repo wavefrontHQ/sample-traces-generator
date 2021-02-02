@@ -1,6 +1,11 @@
 package com.sunnylabs.tracegenerator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
 
 @lombok.Data
 public class Application implements TraceGenerator {

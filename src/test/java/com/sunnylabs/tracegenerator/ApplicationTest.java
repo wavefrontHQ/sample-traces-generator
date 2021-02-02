@@ -4,7 +4,11 @@ import com.wavefront.java_sdk.com.google.common.collect.ImmutableList;
 import com.wavefront.sdk.common.Pair;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;

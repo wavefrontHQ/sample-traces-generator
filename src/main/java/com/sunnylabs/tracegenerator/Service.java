@@ -2,7 +2,12 @@ package com.sunnylabs.tracegenerator;
 
 import com.wavefront.sdk.common.Pair;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
 
 @lombok.Data
 public class Service implements TraceGenerator {
