@@ -83,10 +83,7 @@ public class Configuration {
             String name = appNames.get(idx);
             appNames.remove(idx);
 
-            List<String> serviceNames = new ArrayList<>(words.get("services"));
-            List<String> operationNames = new ArrayList<>(words.get("operations"));
-            Application a = createRandomApp(serviceNames, operationNames);
-            apps.put(name, a);
+            apps.put(name, createRandomApp(words.get("services"), words.get("operations")));
         }
 
         fixReferences(apps);
@@ -158,7 +155,9 @@ public class Configuration {
     }
 
 
-    private Application createRandomApp(List<String> serviceNames, List<String> operationNames) {
+    private Application createRandomApp(List<String> svcNames, List<String> opNames) {
+        List<String> serviceNames = new ArrayList<>(svcNames);
+        List<String> operationNames = new ArrayList<>(opNames);
         Application a = new Application();
         Map<String, Service> services = new HashMap<>();
         int desiredServices = Math.min(servicesPerApp, serviceNames.size());
@@ -166,7 +165,7 @@ public class Configuration {
             int idx = new Random().nextInt(serviceNames.size());
             String name = serviceNames.get(idx);
             serviceNames.remove(idx);
-            Service service = createRandomService(new ArrayList<>(operationNames));
+            Service service = createRandomService(operationNames);
             services.put(name, service);
         }
         a.setServices(services);
@@ -174,12 +173,13 @@ public class Configuration {
     }
 
     private Service createRandomService(List<String> operationNames) {
+        List<String> names = new ArrayList<>(operationNames);
         Service s = new Service();
         Map<String, Operation> operations = new HashMap<>();
         for (int i = 0; i < 10; i++) {
-            int idx = new Random().nextInt(operationNames.size());
-            String name = operationNames.get(idx);
-            operationNames.remove(idx);
+            int idx = new Random().nextInt(names.size());
+            String name = names.get(idx);
+            names.remove(idx);
             operations.put(name, new Operation(name));
         }
         s.setOperations(operations);
