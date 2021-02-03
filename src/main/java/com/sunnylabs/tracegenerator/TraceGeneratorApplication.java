@@ -1,6 +1,7 @@
 package com.sunnylabs.tracegenerator;
 
 import com.wavefront.sdk.proxy.WavefrontProxyClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -23,6 +24,8 @@ public class TraceGeneratorApplication {
     private WavefrontProxyClient client;
     private TraceSender traceSender;
     private Configuration config;
+    @Value("${generator.send_frequency_ms:30000}")
+    private int sendFrequency;
 
     public static void main(String[] args) {
         SpringApplication.run(TraceGeneratorApplication.class, args);
@@ -56,7 +59,7 @@ public class TraceGeneratorApplication {
                     } catch (IOException ignored) {
                     }
                 }
-            }, 0, Integer.parseInt(System.getProperty("generator.send_frequency_ms", "30000")));
+            }, 0, sendFrequency);
         };
     }
 

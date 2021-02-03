@@ -2,6 +2,7 @@ package com.sunnylabs.tracegenerator;
 
 import com.wavefront.java_sdk.com.google.common.base.Strings;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -19,10 +20,14 @@ import java.util.Random;
 
 public class Configuration {
     private final RawConfig raw;
-    private final int desiredRandomApps = 10;
-    private final int servicesPerApp = 50;
-    private final int operationsPerService = 10;
-    private final int internalCallsPerApp = 3;
+    @Value("${topology.app_count:10}")
+    private int desiredRandomApps;
+    @Value("${topology.services_per_app:50}")
+    private int servicesPerApp;
+    @Value("${topology.operations_per_service:10}")
+    private int operationsPerService;
+    @Value("${topology.internal_call_count:3}")
+    private int internalCallsPerApp;
 
     public Configuration(InputStream stream) {
         Yaml yaml = new Yaml(new Constructor(RawConfig.class));

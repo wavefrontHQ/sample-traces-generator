@@ -1,6 +1,7 @@
 package com.sunnylabs.tracegenerator;
 
 import com.wavefront.java_sdk.com.google.common.collect.ImmutableList;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +19,8 @@ public class Operation implements TraceGenerator {
     private String source;
     private List<Operation> calls = new ArrayList<>();
     private Map<String, String> tags = new HashMap<>();
-    private float errorChance = Integer.parseInt(System.getProperty("generator.error_percentage", "5"));
+    @Value("${generator.error_percentage:5}")
+    private float errorChance;
 
     @SuppressWarnings("unused")
     public Operation() {
