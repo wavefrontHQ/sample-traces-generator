@@ -2,7 +2,6 @@ package com.sunnylabs.tracegenerator;
 
 import com.wavefront.java_sdk.com.google.common.base.Strings;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -19,17 +18,20 @@ import java.util.Optional;
 import java.util.Random;
 
 public class Configuration {
-    private final RawConfig raw;
-    @Value("${topology.app_count:10}")
-    private int desiredRandomApps;
-    @Value("${topology.services_per_app:50}")
-    private int servicesPerApp;
-    @Value("${topology.operations_per_service:10}")
-    private int operationsPerService;
-    @Value("${topology.internal_call_count:3}")
-    private int internalCallsPerApp;
+    private final int desiredRandomApps;
+    private final int servicesPerApp;
+    private final int operationsPerService;
+    private final int internalCallsPerApp;
+    private RawConfig raw;
 
-    public Configuration(InputStream stream) {
+    public Configuration(int desiredRandomApps, int servicesPerApp, int operationsPerService, int internalCallsPerApp) {
+        this.desiredRandomApps = desiredRandomApps;
+        this.servicesPerApp = servicesPerApp;
+        this.operationsPerService = operationsPerService;
+        this.internalCallsPerApp = internalCallsPerApp;
+    }
+
+    public void load(InputStream stream) {
         Yaml yaml = new Yaml(new Constructor(RawConfig.class));
         raw = getRawConfig(stream, yaml);
         setDefaults();
@@ -79,8 +81,7 @@ public class Configuration {
     private Map<String, Application> createRandomApps() {
         Map<String, Application> apps = new HashMap<>();
         Yaml yaml = new Yaml();
-        InputStream inputStream = this.getClass()
-                .getClassLoader()
+        InputStream inputStream = this.getClass().getClassLoader()
                 .getResourceAsStream("wordlists.yaml");
         Map<String, List<String>> words = yaml.load(inputStream);
 
@@ -183,7 +184,8 @@ public class Configuration {
         List<String> names = new ArrayList<>(operationNames);
         Service s = new Service();
         Map<String, Operation> operations = new HashMap<>();
-        for (int i = 0; i < operationsPerService && names.size() > 0; i++) {
+        int desiredOperations = Math.min(operationsPerService, names.size());
+        for (int i = 0; i < desiredOperations; i++) {
             int idx = new Random().nextInt(names.size());
             String name = names.get(idx);
             names.remove(idx);

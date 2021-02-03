@@ -23,9 +23,19 @@ public class TraceGeneratorApplication {
     @SuppressWarnings("deprecation")
     private WavefrontProxyClient client;
     private TraceSender traceSender;
-    private Configuration config;
     @Value("${generator.send_frequency_ms:30000}")
     private int sendFrequency;
+    @Value("${topology.app_count:10}")
+    private int desiredRandomApps;
+    @Value("${topology.services_per_app:50}")
+    private int servicesPerApp;
+    @Value("${topology.operations_per_service:10}")
+    private int operationsPerService;
+    @Value("${topology.internal_call_count:3}")
+    private int internalCallsPerApp;
+
+    private Configuration config;
+
 
     public static void main(String[] args) {
         SpringApplication.run(TraceGeneratorApplication.class, args);
@@ -34,9 +44,11 @@ public class TraceGeneratorApplication {
     @Bean
     public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
         return args -> {
+            Configuration config = new Configuration(desiredRandomApps, servicesPerApp,
+                    operationsPerService, internalCallsPerApp);
             InputStream inputStream = this.getClass().getClassLoader()
                     .getResourceAsStream("config.yaml");
-            config = new Configuration(inputStream);
+            config.load(inputStream);
 
             // TODO extend WavefrontClient instead of using WavefrontProxyClient
             // TODO get ports and hostnames from app properties

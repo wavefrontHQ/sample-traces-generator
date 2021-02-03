@@ -18,7 +18,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class ConfigurationTest {
     @Test
     public void emptyConfig() {
-        Configuration subject = generateConfiguration("");
+        Configuration subject = new Configuration(10, 1, 1, 1);
+        subject.load(new ByteArrayInputStream("".getBytes()));
         assertThat(subject.applications(), hasSize(10));
     }
 
@@ -220,6 +221,8 @@ public class ConfigurationTest {
 
 
     private Configuration generateConfiguration(String config) {
-        return new Configuration(new ByteArrayInputStream(config.getBytes()));
+        Configuration configuration = new Configuration(1, 1, 1, 1);
+        configuration.load(new ByteArrayInputStream(config.getBytes()));
+        return configuration;
     }
 }
