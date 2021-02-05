@@ -154,6 +154,11 @@ public class Topology {
         return apps;
     }
 
+    /**
+     * Wire up internal references and tree structure left incomplete when loading from YAML
+     *
+     * @param apps the incomplete topology of apps by name
+     */
     private void fixReferences(Map<String, Application> apps) {
         apps.forEach((appName, app) -> {
             app.setName(appName);
