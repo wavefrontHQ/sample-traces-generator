@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * An individual span in a trace
+ */
 public class Span {
 
     public String operationName;
@@ -21,6 +24,18 @@ public class Span {
     public List<Pair<String, String>> tags;
     public List<SpanLog> spanLogs;
 
+    /**
+     * @param operationName the operation this span represents
+     * @param startTime millisecond timestamp for the beginning of the span
+     * @param duration total duration for the span in milliseconds
+     * @param source value for required source tag
+     * @param traceId UUID used to correlate spans within a trace
+     * @param spanId unique span id
+     * @param parents list of span ids that are parents of this span
+     * @param followsFrom list of span ids this span follows from
+     * @param tags freeform span tags
+     * @param spanLogs list of {@link SpanLog}
+     */
     public Span(String operationName, long startTime, long duration, String source, UUID traceId, UUID spanId, List<UUID> parents, List<UUID> followsFrom, List<Pair<String, String>> tags, List<SpanLog> spanLogs) {
         this.operationName = operationName;
         this.startTime = startTime;

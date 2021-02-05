@@ -12,6 +12,9 @@ import java.util.Random;
 import java.util.UUID;
 
 @lombok.Data
+/**
+ * An individual operation for tracing
+ **/
 public class Operation implements TraceGenerator {
     private String service;
     private String name;
@@ -22,18 +25,35 @@ public class Operation implements TraceGenerator {
     @Value("${generator.error_percentage:5}")
     private float errorChance;
 
+    /**
+     * default constructor used by YAML creator
+     */
     @SuppressWarnings("unused")
     public Operation() {
     }
 
+    /**
+     * @param name the operation name
+     */
     public Operation(String name) {
         this.name = name;
     }
 
+    /**
+     * Add a dependent operation which will be called by this operation in traces
+     *
+     * @param op2 the next operation to call
+     */
     public void addCall(Operation op2) {
         calls.add(op2);
     }
 
+    /**
+     * Set the percentage chance of generating an error when tracing this operation
+     *
+     * @param errorChance the percentage likelihood of generating an error
+     * @throws IllegalArgumentException if errorChance is not a valid percentage
+     */
     @SuppressWarnings("unused")
     public void setErrorChance(float errorChance) {
         if (errorChance < 0 || errorChance > 100) {
@@ -42,6 +62,12 @@ public class Operation implements TraceGenerator {
         this.errorChance = errorChance;
     }
 
+    /**
+     * Generate a trace for the operation and its dependent operations
+     *
+     * @param traceId UUID to add as the traceId for generated spans
+     * @return a List of {@link Span}s in the trace
+     */
     @Override
     public List<Span> generateTrace(UUID traceId) {
         return generateTrace(traceId, Optional.empty(), 0, getRandomDuration(1200));
@@ -54,6 +80,15 @@ public class Operation implements TraceGenerator {
         return new Random().nextInt(max / 2) + max / 2;
     }
 
+    /**
+     * Generate a child trace for the operation and its dependent operations
+     *
+     * @param traceId UUID to add as the traceId for generated spans
+     * @param parentId UUID to add as the parentId for generated spans
+     * @param offsetMillis ms to add to start time for dependent operations
+     * @param durationMillis total milliseconds for the trace
+     * @return a List of {@link Span}s in the trace
+     */
     public List<Span> generateTrace(UUID traceId, Optional<UUID> parentId,
                                     int offsetMillis, int durationMillis) {
         source = "trace-generator";

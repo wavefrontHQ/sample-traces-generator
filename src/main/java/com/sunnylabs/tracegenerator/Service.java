@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
+/**
+ * An application service for tracing
+ */
 @lombok.Data
 public class Service implements TraceGenerator {
     private String name;
@@ -18,11 +21,24 @@ public class Service implements TraceGenerator {
     private Map<String, String> tags = new HashMap<>();
     private int baseLatency = 0;
 
+    /**
+     * Generate a trace for a random operation in the service
+     *
+     * @param traceId UUID to add as the traceId for generated spans
+     * @return a List of {@link Span}s in the trace
+     */
     @Override
     public List<Span> generateTrace(UUID traceId) {
         return generateTrace(traceId, getRandomOperation());
     }
 
+    /**
+     * Generate a trace for a specific operation the service
+     *
+     * @param traceId UUID to add as the traceId for generated spans
+     * @param operation the operation name
+     * @return a List of {@link Span}s in the trace
+     */
     public List<Span> generateTrace(UUID traceId, String operation) {
         Operation op = operations.get(operation);
         if (op == null) {
@@ -36,6 +52,11 @@ public class Service implements TraceGenerator {
         return spans;
     }
 
+    /**
+     * Set the operations available in the service
+     *
+     * @param operations a map of operations by name
+     */
     public void setOperations(Map<String, Operation> operations) {
         for (Operation op : operations.values()) {
             op.setService(this.name);
@@ -49,6 +70,11 @@ public class Service implements TraceGenerator {
         return names.get(new Random().nextInt(names.size()));
     }
 
+    /**
+     * Set the name of the application to which this service and its operations belong
+     *
+     * @param application the application name
+     */
     public void setApplication(String application) {
         this.application = application;
         if (operations != null) {
@@ -56,6 +82,12 @@ public class Service implements TraceGenerator {
         }
     }
 
+    /**
+     * Get an operation by name
+     *
+     * @param name the operation name
+     * @return the named operation or null
+     */
     public Operation getOperation(String name) {
         return operations.get(name);
     }
