@@ -34,10 +34,8 @@ public class Application implements TraceGenerator {
      * @return a List of {@link Span}s in the trace
      */
     public List<Span> generateTrace(UUID traceId, String service) {
-        for (Service svc : services.values()) {
-            if (svc.getName().equals(service)) {
-                return svc.generateTrace(traceId);
-            }
+        if (services.containsKey(service)) {
+            return services.get(service).generateTrace(traceId);
         }
         return Collections.emptyList();
     }
