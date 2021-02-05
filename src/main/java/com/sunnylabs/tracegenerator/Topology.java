@@ -17,25 +17,80 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
-public class Configuration {
+/**
+ * The collection of applications and entrypoints to use when simulating traces
+ */
+public class Topology {
     private final int desiredRandomApps;
     private final int servicesPerApp;
     private final int operationsPerService;
     private final int internalCallsPerApp;
     private RawConfig raw;
 
-    public Configuration(int desiredRandomApps, int servicesPerApp, int operationsPerService, int internalCallsPerApp) {
+    /**
+     * @param desiredRandomApps    for random topology, how many apps to create
+     * @param servicesPerApp       for random topology, how many services to add per app
+     * @param operationsPerService for random topology, how many operations each service should have
+     * @param internalCallsPerApp  for random topology, how many calls between each app's services
+     */
+    public Topology(int desiredRandomApps, int servicesPerApp, int operationsPerService, int internalCallsPerApp) {
         this.desiredRandomApps = desiredRandomApps;
         this.servicesPerApp = servicesPerApp;
         this.operationsPerService = operationsPerService;
         this.internalCallsPerApp = internalCallsPerApp;
     }
 
+    /**
+     * @param stream InputStream from which to read YAML topology
+     */
     public void load(InputStream stream) {
         Yaml yaml = new Yaml(new Constructor(RawConfig.class));
         raw = getRawConfig(stream, yaml);
         setDefaults();
         checkCallGraph();
+    }
+
+    /**
+     * Get the applications in the topology
+     *
+     * @return the applications as a list
+     */
+    @NonNull
+    public List<Application> applications() {
+        if (raw.applications == null || raw.applications.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return new ArrayList<>(raw.applications.values());
+    }
+
+    /**
+     * Get the trace entrypoints
+     *
+     * @return a list of operations from which to start traces
+     */
+    @NonNull
+    public List<Operation> entrypoints() {
+        List<Operation> entries = new ArrayList<>();
+        List<Application> applications = applications();
+        if (!applications.isEmpty()) {
+            applications.forEach(a -> a.getServices().forEach((svcName, s) -> s.getOperations().forEach((opName, o) -> {
+                String slug = a.getName() + "." + s.getName() + "." + o.getName();
+                if (raw.entrypoints == null || raw.entrypoints.isEmpty() || raw.entrypoints.contains(slug)) {
+                    entries.add(o);
+                }
+            })));
+        }
+        return entries;
+    }
+
+    /**
+     * Get an application by name
+     *
+     * @param name the application name
+     * @return the application or null
+     */
+    public Application getApplication(String name) {
+        return raw.applications.get(name);
     }
 
     private void checkCallGraph() {
@@ -60,17 +115,17 @@ public class Configuration {
         graph.add(operation);
         for (Operation o : operation.getCalls()) {
             if (graph.contains(o)) {
-                throw new IllegalArgumentException(String.format("Operation %s.%s.%s has circular" +
-                                " reference to %s.%s.%s",
-                        operation.getApplication(), operation.getService(), operation.getName(),
-                        o.getApplication(), o.getService(), o.getName()));
+                throw new IllegalArgumentException(
+                        String.format("Operation %s.%s.%s has circular reference to %s.%s.%s",
+                                operation.getApplication(), operation.getService(), operation.getName(),
+                                o.getApplication(), o.getService(), o.getName()));
             }
             checkCalls(o, graph);
         }
     }
 
-
     private void setDefaults() {
+        // TODO split out random topology and configured topology
         if (raw.applications == null || raw.applications.isEmpty()) {
             raw.applications = createRandomApps();
         } else {
@@ -161,7 +216,6 @@ public class Configuration {
     private <T> T getRandom(Collection<T> from) {
         return new ArrayList<>(from).get(new Random().nextInt(from.size()));
     }
-
 
     private Application createRandomApp(List<String> svcNames, List<String> opNames) {
         List<String> serviceNames = new ArrayList<>(svcNames);
@@ -266,34 +320,8 @@ public class Configuration {
 
     }
 
-    @NonNull
-    public List<Application> applications() {
-        if (raw.applications == null || raw.applications.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return new ArrayList<>(raw.applications.values());
-    }
-
-    public List<Operation> entrypoints() {
-        List<Operation> entries = new ArrayList<>();
-        List<Application> applications = applications();
-        if (!applications.isEmpty()) {
-            applications.forEach(a -> a.getServices().forEach((svcName, s) -> s.getOperations().forEach((opName, o) -> {
-                String slug = a.getName() + "." + s.getName() + "." + o.getName();
-                if (raw.entrypoints == null || raw.entrypoints.isEmpty() || raw.entrypoints.contains(slug)) {
-                    entries.add(o);
-                }
-            })));
-        }
-        return entries;
-    }
-
-    public Application getApplication(String name) {
-        return raw.applications.get(name);
-    }
-
     @Data
-    public static class RawConfig {
+    private static class RawConfig {
         public List<String> entrypoints = new ArrayList<>();
         private Map<String, Application> applications = new HashMap<>();
     }

@@ -34,7 +34,7 @@ public class TraceGeneratorApplication {
     @Value("${topology.internal_call_count:3}")
     private int internalCallsPerApp;
 
-    private Configuration config;
+    private Topology topology;
 
 
     public static void main(String[] args) {
@@ -44,11 +44,11 @@ public class TraceGeneratorApplication {
     @Bean
     public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
         return args -> {
-            Configuration config = new Configuration(desiredRandomApps, servicesPerApp,
+            topology = new Topology(desiredRandomApps, servicesPerApp,
                     operationsPerService, internalCallsPerApp);
             InputStream inputStream = this.getClass().getClassLoader()
                     .getResourceAsStream("config.yaml");
-            config.load(inputStream);
+            topology.load(inputStream);
 
             // TODO extend WavefrontClient instead of using WavefrontProxyClient
             // TODO get ports and hostnames from app properties
@@ -76,6 +76,6 @@ public class TraceGeneratorApplication {
     }
 
     private Operation randomEntrypoint() {
-        return config.entrypoints().get(new Random().nextInt(config.entrypoints().size()));
+        return topology.entrypoints().get(new Random().nextInt(topology.entrypoints().size()));
     }
 }

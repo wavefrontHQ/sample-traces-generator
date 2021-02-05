@@ -15,17 +15,17 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class ConfigurationTest {
+public class TopologyTest {
     @Test
     public void emptyConfig() {
-        Configuration subject = new Configuration(10, 1, 1, 1);
+        Topology subject = new Topology(10, 1, 1, 1);
         subject.load(new ByteArrayInputStream("".getBytes()));
         assertThat(subject.applications(), hasSize(10));
     }
 
     @Test
     public void createsApplicationFromConfig() {
-        Configuration subject = generateConfiguration("applications:\n  testApp: {services: {}}");
+        Topology subject = loadConfig("applications:\n  testApp: {services: {}}");
 
         assertThat(subject.applications(), hasSize(1));
         assertThat(subject.applications().get(0).getName(), is("testApp"));
@@ -33,7 +33,7 @@ public class ConfigurationTest {
 
     @Test
     public void createsServicesFromConfig() {
-        Configuration subject = generateConfiguration("applications:\n" +
+        Topology subject = loadConfig("applications:\n" +
                 "  testApp: { services: { testService: {}} }");
 
         assertThat(subject.applications(), hasSize(1));
@@ -46,7 +46,7 @@ public class ConfigurationTest {
 
     @Test
     public void createsOperationsFromConfig() {
-        Configuration subject = generateConfiguration("applications:\n" +
+        Topology subject = loadConfig("applications:\n" +
                 "  testApp:\n" +
                 "    services: \n" +
                 "      testService:\n" +
@@ -66,7 +66,7 @@ public class ConfigurationTest {
 
     @Test
     public void linksOperationsWithinAService() {
-        Configuration subject = generateConfiguration("applications:\n" +
+        Topology subject = loadConfig("applications:\n" +
                 "  testApp:\n" +
                 "    services:\n" +
                 "      testService:\n" +
@@ -83,7 +83,7 @@ public class ConfigurationTest {
 
     @Test
     public void linksOperationsAcrossApplications() {
-        Configuration subject = generateConfiguration("applications:\n" +
+        Topology subject = loadConfig("applications:\n" +
                 "  app1:\n" +
                 "    services:\n" +
                 "      svc1:\n" +
@@ -110,7 +110,7 @@ public class ConfigurationTest {
 
     @Test
     public void errorChance() {
-        Configuration valid = generateConfiguration("applications:\n" +
+        Topology valid = loadConfig("applications:\n" +
                 "  testApp:\n" +
                 "    services:\n" +
                 "      testService:\n" +
@@ -123,7 +123,7 @@ public class ConfigurationTest {
     @Test
     public void rejectsNegativeErrorChance() {
         try {
-            generateConfiguration("applications:\n" +
+            loadConfig("applications:\n" +
                     "- name: testApp\n" +
                     "  services: \n" +
                     "  - name: testService\n" +
@@ -139,7 +139,7 @@ public class ConfigurationTest {
     @Test
     public void rejectsTooHighErrorChance() {
         try {
-            generateConfiguration("applications:\n" +
+            loadConfig("applications:\n" +
                     "- name: testApp\n" +
                     "  services: \n" +
                     "  - name: testService\n" +
@@ -154,7 +154,7 @@ public class ConfigurationTest {
 
     @Test
     public void addsTagsOnServices() {
-        Configuration subject = generateConfiguration("applications:\n" +
+        Topology subject = loadConfig("applications:\n" +
                 "  app1:\n" +
                 "    services:\n" +
                 "      svc1:\n" +
@@ -168,7 +168,7 @@ public class ConfigurationTest {
 
     @Test
     public void setsEntryPoints() {
-        Configuration subject = generateConfiguration("applications:\n" +
+        Topology subject = loadConfig("applications:\n" +
                 "  testApp:\n" +
                 "    services: \n" +
                 "      testService: { operations: { theOperation: {} } }\n");
@@ -179,7 +179,7 @@ public class ConfigurationTest {
 
     @Test
     public void setsEntryPointsFromConfig() {
-        Configuration subject = generateConfiguration("entrypoints: [ app.svc.op1 ]\n" +
+        Topology subject = loadConfig("entrypoints: [ app.svc.op1 ]\n" +
                 "applications:\n" +
                 "  app:\n" +
                 "    services: \n" +
@@ -191,7 +191,7 @@ public class ConfigurationTest {
     @Test
     public void loopDetection() {
         try {
-            generateConfiguration("applications: { app: { services: { svc: { " +
+            loadConfig("applications: { app: { services: { svc: { " +
                     "operations: {" +
                     "  op1: { calls: [{ name: op2 }] }," +
                     "  op2: { calls: [{ name: op3 }] }," +
@@ -205,14 +205,14 @@ public class ConfigurationTest {
 
     @Test
     public void ignoresApplicationNameOverride() {
-        Configuration subject = generateConfiguration("applications: { app: { name: different }}");
+        Topology subject = loadConfig("applications: { app: { name: different }}");
         assertThat(subject.applications(), hasSize(1));
         assertThat(subject.applications().get(0).getName(), is("app"));
     }
 
     @Test
     public void ignoresServiceNameOverride() {
-        Configuration subject = generateConfiguration("applications: { app: { services: { svc: { " +
+        Topology subject = loadConfig("applications: { app: { services: { svc: { " +
                 "name: different" +
                 "}}}}");
         assertThat(subject.getApplication("app").getServices(), hasKey("svc"));
@@ -220,8 +220,8 @@ public class ConfigurationTest {
     }
 
 
-    private Configuration generateConfiguration(String config) {
-        Configuration configuration = new Configuration(1, 1, 1, 1);
+    private Topology loadConfig(String config) {
+        Topology configuration = new Topology(1, 1, 1, 1);
         configuration.load(new ByteArrayInputStream(config.getBytes()));
         return configuration;
     }
