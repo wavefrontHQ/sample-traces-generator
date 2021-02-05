@@ -165,7 +165,7 @@ public class Topology {
             if (app.getServices() == null) {
                 return;
             }
-            app.getServices().forEach((name, svc) -> setServiceDefaults(svc, name, appName));
+            app.getServices().forEach((name, svc) -> setServiceAttributes(svc, name, appName));
 
             for (Service svc : app.getServices().values()) {
                 Map<String, Operation> ops = svc.getOperations();
@@ -270,25 +270,23 @@ public class Topology {
         if (svc == null) {
             return Optional.empty();
         }
-        return Optional.of(getOperationOrRandom(c, svc));
+        if (Strings.isNullOrEmpty(c.getName())) {
+            // if operation name is left blank, pick a random operation
+            return Optional.ofNullable(getRandom(svc.getOperations()));
+        }
+        return Optional.ofNullable(svc.getOperation(c.getName()));
     }
 
-    private Operation getOperationOrRandom(Operation c, Service svc) {
-        List<Operation> operations = new ArrayList<>(svc.getOperations().values());
-        Operation random = operations.get(new Random().nextInt(operations.size()));
-        return svc.getOperations().getOrDefault(c.getName(), random);
-    }
-
-    private void setServiceDefaults(Service svc, String serviceName, String defaultApplication) {
+    private void setServiceAttributes(Service svc, String serviceName, String defaultApplication) {
         svc.setName(serviceName);
         if (Strings.isNullOrEmpty(svc.getApplication())) {
             svc.setApplication(defaultApplication);
         }
         if (svc.getOperations() != null) {
             svc.getOperations().forEach((name, op) -> {
-                setOperationDefaults(op, name, svc.getApplication(), svc.getName());
+                setOperationAttributes(op, name, svc.getApplication(), svc.getName());
                 for (Operation o : op.getCalls()) {
-                    setOperationDefaults(o, o.getName(), svc.getApplication(), svc.getName());
+                    setOperationAttributes(o, o.getName(), svc.getApplication(), svc.getName());
 
                 }
             });
@@ -296,10 +294,10 @@ public class Topology {
 
     }
 
-    private void setOperationDefaults(Operation op,
-                                      String operationName,
-                                      String defaultApplication,
-                                      String defaultService) {
+    private void setOperationAttributes(Operation op,
+                                        String operationName,
+                                        String defaultApplication,
+                                        String defaultService) {
         op.setName(operationName);
         if (Strings.isNullOrEmpty(op.getApplication())) {
             op.setApplication(defaultApplication);
