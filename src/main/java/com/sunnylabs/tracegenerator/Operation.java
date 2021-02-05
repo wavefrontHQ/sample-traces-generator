@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
@@ -70,7 +69,7 @@ public class Operation implements TraceGenerator {
      */
     @Override
     public List<Span> generateTrace(UUID traceId) {
-        return generateTrace(traceId, Optional.empty(), 0, getRandomDuration(1200));
+        return generateTrace(traceId, null, 0, getRandomDuration(1200));
     }
 
     private int getRandomDuration(int max) {
@@ -89,7 +88,7 @@ public class Operation implements TraceGenerator {
      * @param durationMillis total milliseconds for the trace
      * @return a List of {@link Span}s in the trace
      */
-    public List<Span> generateTrace(UUID traceId, Optional<UUID> parentId,
+    public List<Span> generateTrace(UUID traceId, UUID parentId,
                                     int offsetMillis, int durationMillis) {
         source = "trace-generator";
 
@@ -100,15 +99,17 @@ public class Operation implements TraceGenerator {
         trace.add(span);
         if (calls != null) {
             calls.forEach(c -> trace.addAll(c.generateTrace(traceId,
-                    Optional.ofNullable(span.spanId), offset, duration)));
+                    span.spanId, offset, duration)));
         }
         return trace;
     }
 
-    private Span getSpan(UUID traceId, Optional<UUID> parentId, int offset, int durationMillis) {
+    private Span getSpan(UUID traceId, UUID parentId, int offset, int durationMillis) {
         long startMillis = System.currentTimeMillis() + offset;
         Span.Builder builder = new Span.Builder(name, startMillis, durationMillis, source);
-        parentId.ifPresent(uuid -> builder.setParents(ImmutableList.of(uuid)));
+        if (parentId != null) {
+            builder.setParents(ImmutableList.of(parentId));
+        }
         builder.errorChance(errorChance);
         builder.setIdentityTags(application, "cluster", service, "shard");
         tags.forEach(builder::addTag);
