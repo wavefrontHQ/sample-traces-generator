@@ -8,7 +8,7 @@ applications:
     services:
       order:
         operations:
-          - name: simpleOrder
+          simpleOrder:
             calls:
               - service: brew
                 name: dripCoffee
@@ -16,7 +16,7 @@ applications:
                 service: order
                 name: muffin
             errorChance: 0 # simpleOrder never fails
-          - name: latte
+          latte:
             calls:
               - service: brew
                 name: espresso
@@ -25,34 +25,34 @@ applications:
               - application: bakery
                 service: order
                 name: scone
-          - name: americano
+          americano:
             calls:
               - service: brew
                 name: espresso
-          - name: steamer
+          steamer:
             calls:
               - service: brew
                 name: frothedMilk
       brew:
         operations:
-          - name: dripCoffee
+          dripCoffee:
             calls:
               - service: fulfillment
                 name: pickup
-          - name: espresso
+          espresso:
             errorChance: 30
             tags:
               _outboundExternalService: AWSLambda
       fulfillment:
-        operations: [ { name: delivery }, { name: pickup } ]
+        operations: { delivery: {}, pickup: {} }
 
   bakery:
     services:
       order:
         operations:
-          - name: muffin
+          muffin:
             calls: [ { application: barista, service: fulfillment, name: delivery } ]
-          - name: scone
+          scone:
             calls:
               - application: bakery
                 service: oven

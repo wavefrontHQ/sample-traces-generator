@@ -326,6 +326,6 @@ public class Topology {
     @Data
     private static class RawConfig {
         public List<String> entrypoints = new ArrayList<>();
-        private Map<String, Application> applications = new HashMap<>();
+        public Map<String, Application> applications = new HashMap<>();
     }
 }
