@@ -195,7 +195,7 @@ public class TopologyTest {
           "operations: {" +
           "  op1: { calls: [{ name: op2 }] }," +
           "  op2: { calls: [{ name: op3 }] }," +
-          "  op3: { calls: [{ name: op4 }] }" +
+          "  op3: { calls: [{ name: op1 }] }" +
           "} }}}}");
     } catch (IllegalArgumentException ignored) {
       return;
