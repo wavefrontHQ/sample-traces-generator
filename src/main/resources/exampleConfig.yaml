@@ -1,0 +1,62 @@
+entrypoints:
+  - barista.order.simpleOrder
+  - barista.order.latte
+  - barista.order.americano
+  - barista.order.steamer
+applications:
+  barista:
+    services:
+      order:
+        operations:
+          simpleOrder:
+            calls:
+              - service: brew
+                name: dripCoffee
+              - application: bakery
+                service: order
+                name: muffin
+            errorChance: 0 # simpleOrder never fails
+          latte:
+            calls:
+              - service: brew
+                name: espresso
+              - service: brew
+                name: frothedMilk
+              - application: bakery
+                service: order
+                name: scone
+          americano:
+            calls:
+              - service: brew
+                name: espresso
+          steamer:
+            calls:
+              - service: brew
+                name: frothedMilk
+      brew:
+        operations:
+          dripCoffee:
+            calls:
+              - service: fulfillment
+                name: pickup
+          espresso:
+            errorChance: 30
+            tags:
+              _outboundExternalService: AWSLambda
+      fulfillment:
+        operations: { delivery: { }, pickup: { } }
+
+  bakery:
+    services:
+      order:
+        operations:
+          muffin:
+            calls: [ { application: barista, service: fulfillment, name: delivery } ]
+          scone:
+            calls:
+              - application: bakery
+                service: oven
+                name: warm
+                calls: [ { application: barista, service: fulfillment, name: delivery } ]
+        tags:
+          _outboundExternalService: Redis
