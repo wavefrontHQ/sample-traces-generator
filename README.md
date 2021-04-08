@@ -21,9 +21,19 @@ automatically, so from the Wavefront system’s perspective these are real trace
 
 ## Configuration
 
-All fields are optional - omitted fields are filled by the trace generator as a best-effort.
+### WF proxy is required. Direct Data Ingestion will not work. ###
+### ⚠️ You must configure your proxy's customTracingListerPorts and direct the sample traces generator to send traces to that port ###
+Add the following entry to your wavefront.conf:
+```
+# custom tracing listener ports are essential when
+# SDK is sending RAW traces
+customTracingListenerPorts=30001
+```
+Also make sure the port is not colliding any other ports in your proxy config.
 
 ### Data Format
+
+All fields are optional - omitted fields are filled by the trace generator as a best-effort.
 
 A config file may contain `entrypoints` and `applications` at the top level.
 
