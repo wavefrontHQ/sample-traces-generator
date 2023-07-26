@@ -1,3 +1,7 @@
+> **Warning**
+>
+> VMware has ended active development of this project. this repository will no longer be updated.
+
 # Sample Trace Generator
 
 This trace generator tool sends synthetic spans to a [Wavefront Proxy](https://docs.wavefront.com/proxies.html) to
